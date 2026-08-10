@@ -39,3 +39,35 @@ resource "google_compute_firewall" "allow_http" {
 
   source_ranges = ["0.0.0.0/0"]
 }
+
+# Compute instance creation
+resource "google_compute_instance" "web" {
+  name         = "devops-web"
+  machine_type = "e2-micro"
+  zone         = var.zone
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-12"
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.devops_subnet.id
+
+    access_config {
+    }
+  }
+
+  metadata_startup_script = <<-EOF
+    #!/bin/bash
+
+    apt-get update
+    apt-get install -y nginx
+
+    systemctl enable nginx
+    systemctl start nginx
+
+    echo "Hello from GCP Terraform" > /var/www/html/index.html
+  EOF
+}
